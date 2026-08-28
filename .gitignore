@@ -4,6 +4,8 @@ dist-server
 data/*.sqlite
 data/*.sqlite-*
 .env
+.env.*
+!.env.example
 *.log
 .DS_Store
 coverage

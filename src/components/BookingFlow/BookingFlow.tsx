@@ -75,6 +75,12 @@ export function BookingFlow({ provider: injected }: Props) {
     [services, category],
   );
 
+  const filteredMasters = useMemo(() => {
+    const selected = services.find((s) => s.id === serviceId);
+    const categoryId = selected?.categoryId ?? category;
+    return masters.filter((m) => m.categoryId === categoryId);
+  }, [masters, services, serviceId, category]);
+
   function nextFrom(current: number) {
     setError(null);
     if (current === 1 && !category) return setError('Выберите направление');
@@ -161,6 +167,10 @@ export function BookingFlow({ provider: injected }: Props) {
                 onClick={() => {
                   setCategory(c.id);
                   setServiceId('');
+                  const keepMaster =
+                    masterId === ANY_MASTER_ID ||
+                    masters.some((m) => m.id === masterId && m.categoryId === c.id);
+                  if (!keepMaster) setMasterId(ANY_MASTER_ID);
                 }}
               >
                 {c.name}
@@ -184,7 +194,13 @@ export function BookingFlow({ provider: injected }: Props) {
                 className={`min-h-11 rounded-card border px-4 py-4 text-left ${
                   serviceId === s.id ? 'border-primary bg-bg' : 'border-dark/10'
                 }`}
-                onClick={() => setServiceId(s.id)}
+                onClick={() => {
+                  setServiceId(s.id);
+                  const keepMaster =
+                    masterId === ANY_MASTER_ID ||
+                    masters.some((m) => m.id === masterId && m.categoryId === s.categoryId);
+                  if (!keepMaster) setMasterId(ANY_MASTER_ID);
+                }}
               >
                 <span className="block font-medium">{s.name}</span>
                 <span className="text-sm text-muted">{s.priceLabel}</span>
@@ -205,6 +221,9 @@ export function BookingFlow({ provider: injected }: Props) {
       {step === 3 ? (
         <fieldset>
           <legend className="font-heading text-3xl">Выберите мастера</legend>
+          <p className="mt-2 text-sm text-muted">
+            Специалисты показаны для демонстрации сценария записи.
+          </p>
           <div className="mt-5 grid gap-3">
             <button
               type="button"
@@ -215,7 +234,7 @@ export function BookingFlow({ provider: injected }: Props) {
             >
               Любой специалист
             </button>
-            {masters.map((m) => (
+            {filteredMasters.map((m) => (
               <button
                 key={m.id}
                 type="button"
@@ -224,7 +243,8 @@ export function BookingFlow({ provider: injected }: Props) {
                 }`}
                 onClick={() => setMasterId(m.id)}
               >
-                <span className="block font-medium">{m.role}</span>
+                <span className="block font-medium">{m.displayName}</span>
+                <span className="block text-sm text-muted">{m.role}</span>
                 <span className="text-sm text-muted">{m.specialties}</span>
               </button>
             ))}

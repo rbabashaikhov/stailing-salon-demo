@@ -20,6 +20,14 @@ describe('BookingFlow', () => {
     await user.click(screen.getByRole('button', { name: 'Далее' }));
 
     await screen.findByText('Выберите мастера');
+    expect(
+      screen.getByText('Специалисты показаны для демонстрации сценария записи.'),
+    ).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Любой специалист' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Анна/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Ольга/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Мария/ })).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Анна/ }));
     await user.click(screen.getByRole('button', { name: 'Далее' }));
 
     await screen.findByText('Выберите дату');
@@ -40,5 +48,24 @@ describe('BookingFlow', () => {
     await user.click(screen.getByRole('button', { name: 'Отправить заявку' }));
 
     expect(await screen.findByText(/демонстрация сценария записи/)).toBeInTheDocument();
+  });
+
+  it('lists specialists for the selected direction only', async () => {
+    const user = userEvent.setup();
+    renderWithProviders(<BookingFlow provider={new DemoBookingProvider()} />);
+
+    await screen.findByText('Выберите направление');
+    await user.click(screen.getByRole('button', { name: 'Ногти' }));
+    await user.click(screen.getByRole('button', { name: 'Далее' }));
+    await user.click(screen.getByRole('button', { name: /Маникюр/ }));
+    await user.click(screen.getByRole('button', { name: 'Далее' }));
+
+    await screen.findByText('Выберите мастера');
+    const specialistButtons = screen.getAllByRole('button').filter((el) => el.textContent !== 'Далее' && el.textContent !== 'Назад');
+    expect(specialistButtons[0]).toHaveTextContent('Любой специалист');
+    expect(screen.getByRole('button', { name: /Мария/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Екатерина/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Анна/ })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Светлана/ })).not.toBeInTheDocument();
   });
 });

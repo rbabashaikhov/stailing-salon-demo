@@ -15,6 +15,7 @@ export type BookingMaster = {
   role: string;
   specialties: string;
   isPlaceholder: boolean;
+  categoryId: string;
 };
 
 export type Availability = {

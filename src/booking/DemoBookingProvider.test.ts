@@ -4,11 +4,17 @@ import { DemoBookingProvider } from '../booking/DemoBookingProvider';
 describe('DemoBookingProvider', () => {
   const provider = new DemoBookingProvider();
 
-  it('returns catalog services and masters', async () => {
+  it('returns catalog services and demo masters tied to categories', async () => {
     const services = await provider.getServices();
     const masters = await provider.getMasters();
     expect(services.length).toBeGreaterThan(0);
     expect(masters.every((m) => m.isPlaceholder)).toBe(true);
+    expect(masters.find((m) => m.displayName === 'Анна')?.categoryId).toBe('hair');
+    expect(masters.filter((m) => m.categoryId === 'nails').map((m) => m.displayName)).toEqual([
+      'Мария',
+      'Екатерина',
+    ]);
+    expect(masters.filter((m) => m.categoryId === 'other')).toHaveLength(2);
   });
 
   it('returns preferred time windows, not claimed real slots', async () => {

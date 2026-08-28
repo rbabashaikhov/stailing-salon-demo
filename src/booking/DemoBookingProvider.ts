@@ -5,7 +5,7 @@ import {
   services,
   type ServiceCategoryId,
 } from '../data/services';
-import { masters } from '../data/masters';
+import { demoBookingMasters } from '../data/masters';
 import type {
   Availability,
   BookingMaster,
@@ -61,12 +61,13 @@ export function getCatalogServices(): BookingService[] {
 }
 
 export function getCatalogMasters(): BookingMaster[] {
-  return masters.map((m) => ({
+  return demoBookingMasters.map((m) => ({
     id: m.id,
     displayName: m.displayName,
     role: m.role,
     specialties: m.specialties,
     isPlaceholder: true,
+    categoryId: m.categoryId,
   }));
 }
 
