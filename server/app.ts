@@ -27,6 +27,9 @@ export function createApp() {
   app.use('/api/booking', bookingRouter(provider));
 
   const dist = path.resolve(__dirname, '../dist');
+  app.get(['/sitemap.xml', '/sitemap.xml.gz'], (_req, res) => {
+    res.status(404).type('text/plain').send('Not found');
+  });
   app.use(express.static(dist));
   app.get('*', (req, res, next) => {
     if (req.path.startsWith('/api')) {
