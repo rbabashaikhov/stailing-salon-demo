@@ -1,12 +1,12 @@
 import { saveDemoRequest } from '../db/sqlite.js';
 import {
   AVAILABILITY_DISCLAIMER,
-  TIME_SLOTS,
   buildAvailabilityDays,
+  buildDemoTimeSlots,
   masters,
   services,
 } from './catalog.js';
-import type { Availability, BookingMaster, BookingProvider, BookingService, CreateBookingInput } from './types.js';
+import type { Availability, AvailabilityQuery, BookingMaster, BookingProvider, BookingService, CreateBookingInput } from './types.js';
 
 export class DemoBookingProvider implements BookingProvider {
   async getServices(): Promise<BookingService[]> {
@@ -17,10 +17,10 @@ export class DemoBookingProvider implements BookingProvider {
     return masters;
   }
 
-  async getAvailability(): Promise<Availability> {
+  async getAvailability(query?: AvailabilityQuery): Promise<Availability> {
     return {
       days: buildAvailabilityDays(),
-      times: TIME_SLOTS,
+      times: buildDemoTimeSlots(query?.date, query?.masterId),
       disclaimer: AVAILABILITY_DISCLAIMER,
     };
   }

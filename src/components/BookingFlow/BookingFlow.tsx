@@ -67,6 +67,22 @@ export function BookingFlow({ provider: injected }: Props) {
   }, [provider]);
 
   useEffect(() => {
+    if (!date) return;
+    let cancelled = false;
+    provider
+      .getAvailability({ date, masterId })
+      .then((a) => {
+        if (cancelled) return;
+        setAvailability(a);
+        setTime('');
+      })
+      .catch(() => setError('Не удалось загрузить слоты. Попробуйте ещё раз.'));
+    return () => {
+      cancelled = true;
+    };
+  }, [provider, date, masterId]);
+
+  useEffect(() => {
     track('booking_step', { booking_step: step });
   }, [step]);
 
@@ -81,13 +97,18 @@ export function BookingFlow({ provider: injected }: Props) {
     return masters.filter((m) => m.categoryId === categoryId);
   }, [masters, services, serviceId, category]);
 
+  const availableSlots = availability?.times.filter((t) => t.available) ?? [];
+
   function nextFrom(current: number) {
     setError(null);
     if (current === 1 && !category) return setError('Выберите направление');
     if (current === 2 && !serviceId) return setError('Выберите услугу');
     if (current === 3 && !masterId) return setError('Выберите мастера');
     if (current === 4 && !date) return setError('Выберите дату');
-    if (current === 5 && !time) return setError('Выберите время');
+    if (current === 5) {
+      const slot = availability?.times.find((t) => t.id === time);
+      if (!time || !slot?.available) return setError('Выберите доступное время');
+    }
     setStep(current + 1);
   }
 
@@ -171,6 +192,7 @@ export function BookingFlow({ provider: injected }: Props) {
                     masterId === ANY_MASTER_ID ||
                     masters.some((m) => m.id === masterId && m.categoryId === c.id);
                   if (!keepMaster) setMasterId(ANY_MASTER_ID);
+                  setTime('');
                 }}
               >
                 {c.name}
@@ -230,7 +252,10 @@ export function BookingFlow({ provider: injected }: Props) {
               className={`min-h-11 rounded-card border px-4 py-4 text-left ${
                 masterId === ANY_MASTER_ID ? 'border-primary bg-bg' : 'border-dark/10'
               }`}
-              onClick={() => setMasterId(ANY_MASTER_ID)}
+              onClick={() => {
+                setMasterId(ANY_MASTER_ID);
+                setTime('');
+              }}
             >
               Любой специалист
             </button>
@@ -241,7 +266,10 @@ export function BookingFlow({ provider: injected }: Props) {
                 className={`min-h-11 rounded-card border px-4 py-4 text-left ${
                   masterId === m.id ? 'border-primary bg-bg' : 'border-dark/10'
                 }`}
-                onClick={() => setMasterId(m.id)}
+                onClick={() => {
+                  setMasterId(m.id);
+                  setTime('');
+                }}
               >
                 <span className="block font-medium">{m.displayName}</span>
                 <span className="block text-sm text-muted">{m.role}</span>
@@ -271,7 +299,10 @@ export function BookingFlow({ provider: injected }: Props) {
                 className={`min-h-11 rounded-card border px-3 py-3 text-sm ${
                   date === d.date ? 'border-primary bg-bg' : 'border-dark/10'
                 }`}
-                onClick={() => setDate(d.date)}
+                onClick={() => {
+                  setDate(d.date);
+                  setTime('');
+                }}
                 aria-label={`Выбрать дату ${d.label}`}
               >
                 {d.label}
@@ -293,29 +324,56 @@ export function BookingFlow({ provider: injected }: Props) {
         <fieldset>
           <legend className="font-heading text-3xl">Когда вам удобно?</legend>
           <p className="mt-2 text-sm text-muted">
-            Выберите удобный промежуток — точное время подтвердит администратор.
+            {availability?.disclaimer ??
+              'В демо показано примерное расписание. В рабочей версии свободное время будет синхронизироваться с актуальным расписанием выбранного мастера.'}
           </p>
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            {availability?.times.map((t) => (
-              <button
-                key={t.id}
-                type="button"
-                className={`min-h-11 rounded-card border px-4 py-4 ${
-                  time === t.id ? 'border-primary bg-bg' : 'border-dark/10'
-                }`}
-                onClick={() => setTime(t.id)}
-              >
-                {t.label}
-              </button>
-            ))}
-          </div>
+          {availableSlots.length === 0 ? (
+            <p className="mt-5 text-muted">
+              На выбранную дату свободного времени нет.
+              <br />
+              Выберите другой день.
+            </p>
+          ) : (
+            <div className="mt-5 grid min-w-0 grid-cols-2 gap-3 sm:grid-cols-4">
+              {availability?.times.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  disabled={!t.available}
+                  aria-disabled={!t.available}
+                  aria-pressed={t.available ? time === t.id : undefined}
+                  aria-label={
+                    t.available ? `Выбрать ${t.label}` : `${t.label}, недоступно в демо-расписании`
+                  }
+                  className={`min-h-11 min-w-0 rounded-card border px-4 py-4 ${
+                    time === t.id ? 'border-primary bg-bg' : 'border-dark/10'
+                  } ${!t.available ? 'pointer-events-none cursor-not-allowed opacity-40' : ''}`}
+                  onClick={() => {
+                    if (!t.available) return;
+                    setTime(t.id);
+                  }}
+                >
+                  <span className="block font-medium">{t.label}</span>
+                  {!t.available ? (
+                    <span className="mt-1 block text-xs text-muted">Недоступно</span>
+                  ) : null}
+                </button>
+              ))}
+            </div>
+          )}
           <div className="mt-6 flex flex-wrap gap-3">
             <button type="button" className="btn-secondary" onClick={() => setStep(4)}>
               Назад
             </button>
-            <button type="button" className="btn-primary" onClick={() => nextFrom(5)}>
-              Далее
-            </button>
+            {availableSlots.length > 0 ? (
+              <button type="button" className="btn-primary" onClick={() => nextFrom(5)}>
+                Далее
+              </button>
+            ) : (
+              <button type="button" className="btn-primary" onClick={() => setStep(4)}>
+                Выбрать другой день
+              </button>
+            )}
           </div>
         </fieldset>
       ) : null}

@@ -1,5 +1,6 @@
 import type {
   Availability,
+  AvailabilityQuery,
   BookingMaster,
   BookingProvider,
   BookingService,
@@ -30,8 +31,12 @@ export class HttpBookingProvider implements BookingProvider {
     return request('/api/booking/masters');
   }
 
-  getAvailability(): Promise<Availability> {
-    return request('/api/booking/availability');
+  getAvailability(query?: AvailabilityQuery): Promise<Availability> {
+    const params = new URLSearchParams();
+    if (query?.date) params.set('date', query.date);
+    if (query?.masterId) params.set('master_id', query.masterId);
+    const qs = params.toString();
+    return request(`/api/booking/availability${qs ? `?${qs}` : ''}`);
   }
 
   createBooking(input: CreateBookingInput): Promise<CreateBookingResult> {

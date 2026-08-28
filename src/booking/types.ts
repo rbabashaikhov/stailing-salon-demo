@@ -1,6 +1,18 @@
 export type BookingStatus = 'DEMO' | 'NEW' | 'CONTACTED' | 'BOOKED' | 'DONE' | 'LOST';
 
-export type PreferredTime = 'morning' | 'afternoon' | 'evening';
+/** Clock time `HH:mm` (demo or CRM slot). */
+export type PreferredTime = string;
+
+export type AvailabilityQuery = {
+  date?: string;
+  masterId?: string;
+};
+
+export type AvailabilitySlot = {
+  id: PreferredTime;
+  label: string;
+  available: boolean;
+};
 
 export type BookingService = {
   id: string;
@@ -26,7 +38,7 @@ export type AvailabilityDay = {
 
 export type Availability = {
   days: AvailabilityDay[];
-  times: Array<{ id: PreferredTime; label: string }>;
+  times: AvailabilitySlot[];
   disclaimer: string;
 };
 
@@ -77,6 +89,7 @@ export type CreateBookingResult = {
 export interface BookingProvider {
   getServices(): Promise<BookingService[]>;
   getMasters(): Promise<BookingMaster[]>;
-  getAvailability(): Promise<Availability>;
+  /** Days plus slots. Pass date+master so a CRM can return real openings later. */
+  getAvailability(query?: AvailabilityQuery): Promise<Availability>;
   createBooking(input: CreateBookingInput): Promise<CreateBookingResult>;
 }

@@ -17,11 +17,39 @@ describe('DemoBookingProvider', () => {
     expect(masters.filter((m) => m.categoryId === 'other')).toHaveLength(2);
   });
 
-  it('returns preferred time windows, not claimed real slots', async () => {
-    const availability = await provider.getAvailability();
+  it('returns demo clock slots for date and master, not real openings', async () => {
+    const availability = await provider.getAvailability({
+      date: '2026-08-30',
+      masterId: 'demo-hair-1',
+    });
     expect(availability.days.length).toBe(14);
-    expect(availability.times.map((t) => t.id)).toEqual(['morning', 'afternoon', 'evening']);
-    expect(availability.disclaimer).toMatch(/не реальные свободные окна/);
+    expect(availability.times.map((t) => t.id)).toEqual([
+      '10:00',
+      '11:30',
+      '13:00',
+      '14:30',
+      '16:00',
+      '17:30',
+      '19:00',
+    ]);
+    expect(availability.times.some((t) => t.available)).toBe(true);
+    expect(availability.times.some((t) => !t.available)).toBe(true);
+    expect(availability.disclaimer).toMatch(/примерное расписание/);
+
+    const otherMaster = await provider.getAvailability({
+      date: '2026-08-30',
+      masterId: 'demo-hair-2',
+    });
+    const otherDate = await provider.getAvailability({
+      date: '2026-08-31',
+      masterId: 'demo-hair-1',
+    });
+    expect(otherMaster.times.map((t) => t.available)).not.toEqual(availability.times.map((t) => t.available));
+    expect(otherDate.times.map((t) => t.available)).not.toEqual(availability.times.map((t) => t.available));
+
+    const anySpecialist = await provider.getAvailability({ date: '2026-08-30', masterId: 'any' });
+    expect(anySpecialist.times.length).toBe(7);
+    expect(anySpecialist.times.some((t) => t.available)).toBe(true);
   });
 
   it('creates a DEMO booking without CRM side effects', async () => {
@@ -30,7 +58,7 @@ describe('DemoBookingProvider', () => {
       service_id: 'hair-cut-women',
       master_id: 'any',
       preferred_date: '2026-08-30',
-      preferred_time: 'morning',
+      preferred_time: '10:00',
       name: 'Анна',
       phone: '+79268101900',
       utm_source: 'yandex',

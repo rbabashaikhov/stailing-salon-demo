@@ -63,6 +63,8 @@ UI вызывает только интерфейс `BookingProvider` через
 
 `CRM_PROVIDER=demo` → `DemoBookingProvider`
 
+`getAvailability({ date, masterId })` отдаёт слоты на выбранную дату и мастера. Сейчас это demo/mock (часть слотов помечена недоступными). Позже тот же вызов должен ходить в CRM и возвращать реальные окна. Выбранный слот уходит в `createBooking()` как `preferred_time` (`HH:mm`).
+
 Заявка сохраняется в SQLite со статусом `DEMO`. SMS, Telegram и CRM не вызываются.
 
 Позже, без переписывания UI:

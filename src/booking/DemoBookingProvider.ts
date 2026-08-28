@@ -6,23 +6,16 @@ import {
   type ServiceCategoryId,
 } from '../data/services';
 import { demoBookingMasters } from '../data/masters';
+import { AVAILABILITY_DISCLAIMER, buildDemoTimeSlots } from './demoSlots';
 import type {
   Availability,
+  AvailabilityQuery,
   BookingMaster,
   BookingProvider,
   BookingService,
   CreateBookingInput,
   CreateBookingResult,
 } from './types';
-
-const TIME_LABELS = [
-  { id: 'morning' as const, label: 'Утро' },
-  { id: 'afternoon' as const, label: 'День' },
-  { id: 'evening' as const, label: 'Вечер' },
-];
-
-export const AVAILABILITY_DISCLAIMER =
-  'Показаны предпочтительные промежутки, а не реальные свободные окна. Реальная доступность будет получаться из системы записи салона.';
 
 export function buildAvailabilityDays(from = new Date(), count = 14): Availability['days'] {
   const days: Availability['days'] = [];
@@ -88,10 +81,10 @@ export class DemoBookingProvider implements BookingProvider {
     return getCatalogMasters();
   }
 
-  async getAvailability(): Promise<Availability> {
+  async getAvailability(query?: AvailabilityQuery): Promise<Availability> {
     return {
       days: buildAvailabilityDays(),
-      times: TIME_LABELS,
+      times: buildDemoTimeSlots(query?.date, query?.masterId),
       disclaimer: AVAILABILITY_DISCLAIMER,
     };
   }

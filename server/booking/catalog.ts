@@ -1,13 +1,26 @@
-import type { Availability, BookingMaster, BookingService, PreferredTime } from './types.js';
+import type { Availability, BookingMaster, BookingService } from './types.js';
 
-export const TIME_SLOTS: Array<{ id: PreferredTime; label: string }> = [
-  { id: 'morning', label: 'Утро' },
-  { id: 'afternoon', label: 'День' },
-  { id: 'evening', label: 'Вечер' },
-];
+export const DEMO_SLOT_IDS = ['10:00', '11:30', '13:00', '14:30', '16:00', '17:30', '19:00'] as const;
 
 export const AVAILABILITY_DISCLAIMER =
-  'Показаны предпочтительные промежутки, а не реальные свободные окна. Реальная доступность будет получаться из системы записи салона.';
+  'В демо показано примерное расписание. В рабочей версии свободное время будет синхронизироваться с актуальным расписанием выбранного мастера.';
+
+function hashSeed(value: string): number {
+  let n = 0;
+  for (let i = 0; i < value.length; i += 1) n = (n + value.charCodeAt(i) * (i + 1)) % 997;
+  return n;
+}
+
+export function buildDemoTimeSlots(date = '', masterId = 'any'): Availability['times'] {
+  const seed = hashSeed(`${date}|${masterId}`);
+  const busyA = seed % DEMO_SLOT_IDS.length;
+  const busyB = (seed + 4) % DEMO_SLOT_IDS.length;
+  return DEMO_SLOT_IDS.map((id, index) => {
+    const extraBusy = masterId !== 'any' && (seed + index) % 5 === 0;
+    const available = index !== busyA && index !== busyB && !extraBusy;
+    return { id, label: id, available };
+  });
+}
 
 export const services: BookingService[] = [
   { id: 'hair-cut-women', categoryId: 'hair', name: 'Женская стрижка', short: 'По карточке салона', priceLabel: '750–1100 ₽' },

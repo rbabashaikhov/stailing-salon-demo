@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import type { BookingProvider, PreferredTime } from '../booking/types.js';
+import type { AvailabilityQuery, BookingProvider } from '../booking/types.js';
 
 const PHONE_RE = /^\+?[0-9()\s-]{10,18}$/;
-const TIMES: PreferredTime[] = ['morning', 'afternoon', 'evening'];
+const TIME_RE = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export function bookingRouter(provider: BookingProvider): Router {
   const router = Router();
@@ -15,8 +15,11 @@ export function bookingRouter(provider: BookingProvider): Router {
     res.json(await provider.getMasters());
   });
 
-  router.get('/availability', async (_req, res) => {
-    res.json(await provider.getAvailability());
+  router.get('/availability', async (req, res) => {
+    const query: AvailabilityQuery = {};
+    if (typeof req.query.date === 'string') query.date = req.query.date;
+    if (typeof req.query.master_id === 'string') query.masterId = req.query.master_id;
+    res.json(await provider.getAvailability(query));
   });
 
   router.post('/request', async (req, res) => {
@@ -27,13 +30,13 @@ export function bookingRouter(provider: BookingProvider): Router {
     const service_id = String(body.service_id ?? '');
     const master_id = String(body.master_id ?? '');
     const preferred_date = String(body.preferred_date ?? '');
-    const preferred_time = body.preferred_time as PreferredTime;
+    const preferred_time = String(body.preferred_time ?? '');
 
     if (!name || !PHONE_RE.test(phone) || !service_category || !service_id || !master_id || !preferred_date) {
       res.status(400).json({ ok: false, error: 'Invalid booking payload' });
       return;
     }
-    if (!TIMES.includes(preferred_time)) {
+    if (!TIME_RE.test(preferred_time)) {
       res.status(400).json({ ok: false, error: 'Invalid preferred_time' });
       return;
     }
