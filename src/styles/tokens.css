@@ -1,0 +1,21 @@
+:root {
+  --color-bg: #f3eedc;
+  --color-surface: #faf8f1;
+  --color-text: #2b1b17;
+  --color-text-muted: #74655d;
+  --color-dark: #3a241d;
+  --color-primary: #45b5be;
+  --color-primary-hover: #159fc2;
+  --color-gold: #b49762;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

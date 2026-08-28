@@ -1,0 +1,22 @@
+services:
+  stailing-demo:
+    build:
+      context: .
+      args:
+        VITE_DEMO_MODE: "true"
+        VITE_API_URL: ""
+    container_name: stailing-demo
+    restart: unless-stopped
+    environment:
+      PORT: ${PORT:-8080}
+      NODE_ENV: production
+      DEMO_MODE: ${DEMO_MODE:-true}
+      CRM_PROVIDER: ${CRM_PROVIDER:-demo}
+      SQLITE_PATH: /app/data/demo-bookings.sqlite
+    ports:
+      - "${HOST_PORT:-8080}:${PORT:-8080}"
+    volumes:
+      - stailing_demo_data:/app/data
+
+volumes:
+  stailing_demo_data:
